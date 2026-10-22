@@ -137,7 +137,7 @@ body {
 }
 
 .jump {
-    animation: jump-animation 600ms ease-out;
+    animation: jump-animation 700ms ease-out;
 }
 .game-board.running .coin {
     animation: coin-animation 3s infinite linear;
