@@ -1,13 +1,14 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Elementos do Jogo
+
     const chicken = document.querySelector('.chicken');
-    const ghost = document.querySelector('.ghost');
+    const coin = document.querySelector('.coin');
+    const fox = document.querySelector('.fox');
     const gameBoard = document.getElementById('game-board');
     const hudPlayerName = document.getElementById('hud-player-name');
     const scoreDisplay = document.getElementById('score-display');
     const jumpTip = document.getElementById('jump-tip');
 
-    // Modais e Telas
+
     const startModal = document.getElementById('start-modal');
     const startForm = document.getElementById('start-form');
     const playerInput = document.getElementById('player-input');
@@ -21,13 +22,32 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnChangePlayer = document.getElementById('btn-change-player');
 
     // Variáveis de Estado
-    let baseGhostDuration = 1.6;
+    let baseFoxDuration = 1.6;
     let speedLevel = 0;
     let currentPlayer = '';
     let score = 0;
+    let moedas = 0;
+    let bonusMoedas = 0;
     let isPlaying = false;
     let gameLoop = null;
     let scoreLoop = null;
+    let personagemAtual = 'chicken';
+
+    const characterCards = document.querySelectorAll('.character-card');
+
+    characterCards.forEach((card) => {
+        card.addEventListener('click', () => {
+            characterCards.forEach((item) => {
+                item.classList.remove('active');
+            });
+
+            card.classList.add('active');
+            personagemAtual = card.dataset.character;
+
+            console.log('Personagem selecionado:', personagemAtual);
+        });
+    });
+
 
 
     const savedName = localStorage.getItem('chicken_jump_player');
@@ -35,78 +55,113 @@ document.addEventListener('DOMContentLoaded', () => {
         playerInput.value = savedName;
     }
 
-
     function startGame() {
-
         clearInterval(gameLoop);
         clearInterval(scoreLoop);
 
-        gameLoop = setInterval(checkCollision, 10);
+
         resetElements();
 
         isPlaying = true;
         score = 0;
+        moedas = 0;
+        bonusMoedas = 0;
+
+        scoreDisplay.textContent = 0;
+
         scoreDisplay.textContent = '0';
         hudPlayerName.textContent = currentPlayer || 'Jogador';
 
 
-        baseGhostDuration = 1.6;
+        baseFoxDuration = 1.6;
         speedLevel = 0;
-        ghost.style.animationDuration = `${baseGhostDuration}s`;
+        fox.style.animationDuration = `${baseFoxDuration}s`;
+        fox.style.animationPlayState = 'running';
+        chicken.style.animationPlayState = 'running';
 
 
         gameBoard.classList.add('running');
 
 
+        gameLoop = setInterval(() => {
+            checkCollision();
+            checkCoinCollision();
+        }, 10);
+
         scoreLoop = setInterval(() => {
             if (!isPlaying) return;
 
             score += 1;
-            scoreDisplay.textContent = score;
-
-
+            scoreDisplay.textContent = score + bonusMoedas;
 
             const novoNivel = Math.floor(score / 30);
 
             if (novoNivel > speedLevel) {
                 speedLevel = novoNivel;
 
-                const novaDuracao = Math.max(
-                    0.5,
-                    baseGhostDuration - speedLevel * 0.2
+                const velocidade = Math.min(
+                    1 + speedLevel * 0.2,
+                    3
                 );
 
-                // Aumenta a velocidade sem reiniciar a animação
-                const animacaoFantasma = ghost.getAnimations().find(
-                    animacao => animacao.animationName === 'pipe-animation'
+                const animacaoFantasma = fox.getAnimations().find(
+                    animacao => animacao.animationName === 'fox-animation'
                 );
 
                 if (animacaoFantasma) {
-                    animacaoFantasma.playbackRate = baseGhostDuration / novaDuracao;
+                    animacaoFantasma.playbackRate = velocidade;
                 }
             }
-
         }, 100);
     }
 
 
-    function resetElements() {
-        // Reseta cano
-        ghost.style.animation = '';
-        ghost.style.left = '';
 
-        // Reseta chicken
-        chicken.src = 'imagens/chicken-walking.gif';
-        chicken.style.animation = '';
+
+    function resetElements() {
+        // Reinicia a raposa
+        fox.style.animationPlayState = 'running';
+        fox.style.animation = 'none';
+        fox.style.left = '';
+        fox.style.right = '-100px';
+
+        // Reinicia a galinha
+        if (personagemAtual === 'pintinho') {
+            chicken.src = 'imagens/pintinho.gif';
+        } else {
+            chicken.src = 'imagens/chicken-walking.gif';
+        }
+        chicken.classList.toggle('is-pintinho', personagemAtual === 'pintinho');
+        chicken.classList.remove('dead');
+
+        chicken.style.animationPlayState = 'running';
+        chicken.style.animation = 'none';
         chicken.style.bottom = '0px';
         chicken.style.width = '';
         chicken.style.marginLeft = '';
+        chicken.style.display = '';
         chicken.classList.remove('jump');
+
+        // Reinicia a moeda
+        coin.dataset.collected = 'false';
+        coin.style.display = '';
+        coin.style.right = '-50px';
+        coin.style.animation = 'none';
 
         if (jumpTip) {
             jumpTip.style.opacity = '1';
         }
+
+        // Permite que as animações sejam iniciadas novamente
+        void fox.offsetWidth;
+        void chicken.offsetWidth;
+        void coin.offsetWidth;
+
+        fox.style.animation = '';
+        chicken.style.animation = '';
+        coin.style.animation = '';
     }
+
 
     function jump() {
         if (!isPlaying) return;
@@ -127,20 +182,74 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!isPlaying) return;
 
         const chickenRect = chicken.getBoundingClientRect();
-        const ghostRect = ghost.getBoundingClientRect();
+        const foxRect = fox.getBoundingClientRect();
 
-        const margem = 0;
+        // Diminui a área de colisão dos dois personagens
+        const margemHorizontal = 20;
+        const margemVertical = 20;
 
         const colidiu =
-            chickenRect.right - margem > ghostRect.left + margem &&
-            chickenRect.left + margem < ghostRect.right - margem &&
-            chickenRect.bottom - margem > ghostRect.top + margem &&
-            chickenRect.top + margem < ghostRect.bottom - margem;
+            chickenRect.right - margemHorizontal > foxRect.left + margemHorizontal &&
+            chickenRect.left + margemHorizontal < foxRect.right - margemHorizontal &&
+            chickenRect.bottom - margemVertical > foxRect.top + margemVertical &&
+            chickenRect.top + margemVertical < foxRect.bottom - margemVertical;
 
         if (colidiu) {
             triggerGameOver();
         }
     }
+
+
+    function checkCoinCollision() {
+        if (!isPlaying || !coin || coin.dataset.collected === 'true') {
+            return;
+        }
+
+        const chickenRect = chicken.getBoundingClientRect();
+        const coinRect = coin.getBoundingClientRect();
+
+        const colidiu =
+            chickenRect.right > coinRect.left &&
+            chickenRect.left < coinRect.right &&
+            chickenRect.bottom > coinRect.top &&
+            chickenRect.top < coinRect.bottom;
+
+        if (colidiu) {
+            moedas++;
+            score += 5;
+            scoreDisplay.textContent = score + bonusMoedas;
+
+            coin.dataset.collected = 'true';
+            coin.style.animation = 'none';
+            coin.style.display = 'none';
+
+            setTimeout(() => {
+                coin.dataset.collected = 'false';
+
+                // Reinicia a moeda do lado direito da tela
+                coin.style.display = '';
+                coin.style.right = '-50px';
+                coin.style.animation = 'none';
+
+                // Faz a animação começar novamente
+                void coin.offsetWidth;
+                coin.style.animation = '';
+            }, 1000);
+
+            const bonus = document.createElement('span');
+            bonus.textContent = '+5';
+            bonus.className = 'coin-bonus';
+
+            const boardRect = gameBoard.getBoundingClientRect();
+            bonus.style.left = `${coinRect.left - boardRect.left}px`;
+            bonus.style.top = `${coinRect.top - boardRect.top}px`;
+
+            gameBoard.appendChild(bonus);
+
+            setTimeout(() => bonus.remove(), 800);
+        }
+    }
+
 
 
     function triggerGameOver() {
@@ -152,23 +261,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
         gameBoard.classList.remove('running');
 
-        // Congela o fantasma na posição atual
-        ghost.style.animationPlayState = 'paused';
+        // Congela a raposa na posição atual
+        fox.style.animationPlayState = 'paused';
 
         // Congela a galinha
         chicken.style.animationPlayState = 'paused';
-        chicken.src = 'imagens/galinha_morta.png';
-        chicken.style.width = '75px';
-        chicken.style.marginLeft = '50px';
+        if (personagemAtual === 'pintinho') {
+            chicken.src = 'imagens/pintinho-morto.png';
+        } else {
+            chicken.src = 'imagens/galinha_morta.png';
+        }
+
+        chicken.style.width = '90px';
+        chicken.style.marginLeft = 'auto';
 
         // Atualiza a tela de Game Over
-        finalScoreValue.textContent = score;
+        const pontuacaoTotal = score + bonusMoedas;
+        finalScoreValue.textContent = pontuacaoTotal;
         saveStatusMsg.textContent = 'Salvando pontuação no banco...';
         saveStatusMsg.style.color = '#ffcc00';
 
         gameoverModal.classList.add('active');
 
-        saveScore(currentPlayer, score);
+        saveScore(currentPlayer, pontuacaoTotal);
     }
 
 
@@ -269,10 +384,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Submit do Formulário de Início (INICIAR JOGO)
+
     startForm.addEventListener('submit', (e) => {
-        e.preventDefault(); // Impede o recarregamento da página
+        e.preventDefault();
 
         const nameValue = playerInput.value.trim();
+
         if (!nameValue) {
             playerInput.focus();
             return;
@@ -281,10 +398,10 @@ document.addEventListener('DOMContentLoaded', () => {
         currentPlayer = nameValue;
         localStorage.setItem('chicken_jump_player', currentPlayer);
 
-        // Fecha tela de início e começa o jogo
         startModal.classList.remove('active');
         startGame();
     });
+
 
     // Botão "VER RANKING" na tela inicial
     btnViewRanking.addEventListener('click', () => {
@@ -309,11 +426,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // 4. Botão "TROCAR JOGADOR" no Game Over
     btnChangePlayer.addEventListener('click', () => {
         gameoverModal.classList.remove('active');
-        resetElements();
+
         startModal.classList.add('active');
-        playerInput.value = '';
+
+        document.getElementById('character-selection').style.display = 'block';
+
+        playerInput.value = currentPlayer;
         playerInput.focus();
     });
+
 
     // 5. Controle do Pulo por Teclado (Espaço ou Seta para Cima)
     document.addEventListener('keydown', (e) => {

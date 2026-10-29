@@ -12,24 +12,26 @@ try {
     ");
     $rankingInicial = $stmt->fetchAll();
 } catch (Exception $e) {
-    
+
     $rankingInicial = [];
 }
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title> Chicken Jump</title>
-    
+
     <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
 
     <div class="game-container">
-        
+
         <header class="hud-bar">
             <div class="player-info">
                 <span class="label">JOGADOR:</span>
@@ -43,21 +45,15 @@ try {
                 <span class="label">MOEDAS:</span>
                 <span class="value" id="score-display">0</span>
             </div>
-            <div class="star-info">
-                <span class="label">ESTRELAS:</span>
-                <span class="value" id="score-display">0</span>
-            </div>
         </header>
-        
 
-        
+
+
         <main class="game-board" id="game-board">
-            <img src="imagens/clouds.png" class="clouds" alt="Nuvens">
             <img src="imagens/chicken-walking.gif" class="chicken" alt="Galinha">
-            <img src="imagens/ghost-pixelart.gif" class="ghost" alt="Fantasma">
+            <img src="imagens/raposa.png" class="fox" alt="Raposa">
             <img src="imagens/memecoin.gif" class="coin" alt="Moeda">
-            <img src="imagens/star.gif" class="star" alt="Estrela">
-            <span class="jump-tip" id="jump-tip">Pressione ESPAÇO ou clique para pular</span>
+            <span class="jump-tip" id="jump-tip">Pressione ESPAÇO para pular</span>
         </main>
     </div>
 
@@ -66,33 +62,52 @@ try {
         <div class="modal-card">
             <div class="modal-header">
                 <h1 class="game-title">Chicken Jump</h1>
-                <p class="game-subtitle">Corra, desvie dos canos e dispute o topo do ranking!</p>
+                <p class="game-subtitle">Corra, desvie dos obstáculos e dispute o topo do ranking!</p>
             </div>
 
             <form class="start-form" id="start-form">
-                <div class="input-group">
-                    <label for="player-input">DIGITE SEU NOME:</label>
-                    <input 
-                        type="text" 
-                        id="player-input" 
-                        placeholder="Ex: Seu Nome" 
-                        maxlength="30" 
-                        required 
-                        autocomplete="off"
-                        autofocus
-                    >
-                </div>
+                <div class="troca-personagens" id="character-selection" style="display: none;">
 
-                <div class="modal-actions">
-                    <button type="submit" class="btn btn-primary" id="btn-start">INICIAR JOGO</button>
-                    <button type="button" class="btn btn-secondary" id="btn-view-ranking">VER RANKING</button>
-                </div>
-            </form>
 
-            <div class="server-status" id="server-status">
-                <span class="status-dot online">Conectado ao Mysql </span> 
-            </div>
+                    <label>PERSONAGENS:</label>
+                    <div class="character-grid">
+                        <div class="character-card active"
+                            data-character="chicken">
+
+                            <img src="imagens/chicken-walking.gif" alt="Galinha">
+                            <span>Galinha</span>
+                        </div>
+                        <div class="character-card"
+                            data-character="pintinho">
+                            <img src="imagens/pintinho.gif" alt="Pintinho">
+                            <span>Pintinho</span>
+                        </div>
+                    </div>
+                </div>
+        
+        <div class="input-group">
+
+            <label for="player-input">DIGITE SEU NOME:</label>
+            <input
+                type="text"
+                id="player-input"
+                placeholder="Ex: Seu Nome"
+                maxlength="30"
+                required
+                autocomplete="off"
+                autofocus>
         </div>
+
+        <div class="modal-actions">
+            <button type="submit" class="btn btn-primary" id="btn-start">INICIAR JOGO</button>
+            <button type="button" class="btn btn-secondary" id="btn-view-ranking">VER RANKING</button>
+        </div>
+        </form>
+
+        <div class="server-status" id="server-status">
+            <span class="status-dot online"></span>Conectado ao Mysql 
+        </div>
+    </div>
     </div>
 
     <!-- 2. TELA DE GAME OVER & RANKING -->
@@ -117,8 +132,6 @@ try {
                                 <th>POS</th>
                                 <th>JOGADOR</th>
                                 <th>PONTUAÇÃO</th>
-                                <th>MOEDAS CONQUISTADAS</th>
-                                <th>ESTRELAS CONQUISTADAS</th>
                             </tr>
                         </thead>
                         <tbody id="ranking-body">
@@ -144,12 +157,13 @@ try {
 
             <div class="modal-actions">
                 <button type="button" class="btn btn-primary" id="btn-restart">JOGAR NOVAMENTE</button>
-                <button type="button" class="btn btn-secondary" id="btn-change-player">TROCAR JOGADOR</button>
+                <button type="button" class="btn btn-secondary" id="btn-change-player">TROCAR PERSONAGEM</button>
             </div>
         </div>
     </div>
 
-   
+
     <script src="JS/script.js" defer></script>
 </body>
+
 </html>
